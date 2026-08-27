@@ -99,8 +99,8 @@ export function mapContractQuotes(
 
     return {
       contractId,
-      bestBackPrice: book ? bestBid(bids) : null,
-      bestLayPrice: book ? bestOffer(offers) : null,
+      bestBackPrice: book ? bestOffer(offers) : null,
+      bestLayPrice: book ? bestBid(bids) : null,
       bids: book ? [...bids].map(mapLevel).sort((left, right) => right.price - left.price) : [],
       offers: book ? [...offers].map(mapLevel).sort((left, right) => left.price - right.price) : [],
       lastTradedPrice: lastExecuted?.lastTradedPrice ?? null,
