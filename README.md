@@ -1,8 +1,8 @@
-# Smarkets Front-End Task
+# Mock Exchange
 
-A React exchange explorer for a Smarkets account: log in, browse upcoming events by category, open an event for more markets, and watch bid, ask and last-traded prices refresh.
+A React exchange explorer powered by local dynamic data: sign in with demo credentials, browse upcoming events by category, open an event for more markets, and watch bid, ask and last-traded prices refresh.
 
-This is a frontend exercise. A small Express proxy sits in front of the Smarkets API so the browser never holds a `Session-Token`, never fights CORS from the Vite origin, and never depends on raw Smarkets field names.
+The default experience is completely local and requires no third-party account or API access. A small Express backend serves realistic events, markets, order books, and price movements through the same API boundary used by the React application.
 
 ## Running locally
 
@@ -13,6 +13,10 @@ npm run dev
 
 - UI: `http://localhost:5178`
 - Proxy: `http://localhost:8798`
+
+Use any valid-looking email address and any non-empty password. Mock mode keeps authentication local and generates changing quotes on the same five-second polling cycle as the real API.
+
+The original Smarkets integration remains available for development with `npm run dev:live`, but it requires an API-enabled Smarkets account.
 
 ```bash
 npm test

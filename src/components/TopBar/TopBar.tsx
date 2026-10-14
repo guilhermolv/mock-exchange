@@ -6,6 +6,7 @@ import './TopBar.scss';
 
 type TopBarProps = {
   healthStatus?: string;
+  isMock: boolean;
   isLoggingOut: boolean;
   showLogout: boolean;
   theme: Theme;
@@ -13,7 +14,7 @@ type TopBarProps = {
   onToggleTheme: () => void;
 };
 
-export function TopBar({ healthStatus, isLoggingOut, showLogout, theme, onLogout, onToggleTheme }: TopBarProps) {
+export function TopBar({ healthStatus, isMock, isLoggingOut, showLogout, theme, onLogout, onToggleTheme }: TopBarProps) {
   const { priceButtonMode, priceFormat, setPriceButtonMode, setPriceFormat } = usePriceDisplay();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<'price-format' | 'price-buttons' | null>(null);
@@ -68,10 +69,11 @@ export function TopBar({ healthStatus, isLoggingOut, showLogout, theme, onLogout
   return (
     <header className="top-bar">
       <div>
-        <p className="eyebrow">Smarkets exchange task</p>
+        <p className="eyebrow">Mock Exchange</p>
         <h1>Exchange Explorer</h1>
       </div>
       <div className="top-actions">
+        {isMock ? <span className="status status-demo">Demo data</span> : null}
         <span className={healthStatus === 'ok' ? 'status status-ok' : 'status'}>{healthStatus ?? 'checking'}</span>
         {showLogout ? (
           <button className="secondary-button top-bar-logout" type="button" disabled={isLoggingOut} onClick={onLogout}>

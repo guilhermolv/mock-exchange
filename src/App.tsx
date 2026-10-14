@@ -22,6 +22,7 @@ export function App() {
       <AppShell theme={theme}>
         <TopBar
           healthStatus={healthQuery.data?.status}
+          isMock={healthQuery.data?.service === 'smarkets-mock-proxy'}
           isLoggingOut={auth.isLoggingOut}
           showLogout={Boolean(auth.activeSession)}
           theme={theme}

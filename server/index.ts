@@ -5,8 +5,11 @@ import { fetchMarketQuotes } from './quotes';
 import { createSmarketsSession, isSmarketsSessionError, SmarketsApiError, SmarketsResponseValidationError } from './smarketsClient';
 import { clearLocalSession, createLocalSession, getLocalSession, getSessionIdFromCookieHeader, type StoredSession } from './sessionStore';
 import { loginRequestSchema } from '../src/lib/schemas';
+import { fetchMockEventDetail, fetchMockEvents, fetchMockQuotes } from './mockData';
+import { parseEventCategory } from './marketData';
 
 const app = express();
+const mockMode = process.env.SMARKETS_LIVE !== 'true';
 app.disable('x-powered-by');
 app.use(express.json({ limit: '16kb' }));
 app.use('/api', (_request, response, next) => {
@@ -17,7 +20,7 @@ app.use('/api', (_request, response, next) => {
 app.get('/api/health', (_request, response) => {
   response.json({
     status: 'ok',
-    service: 'smarkets-proxy',
+    service: mockMode ? 'smarkets-mock-proxy' : 'smarkets-proxy',
     smarketsBaseUrl: 'https://api.smarkets.com/v3',
   });
 });
@@ -68,7 +71,9 @@ app.post('/api/session', async (request, response, next) => {
       return;
     }
 
-    const session = await createSmarketsSession(credentials.data);
+    const session = mockMode
+      ? { token: 'local-demo-session', stop: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), factor: 'complete' as const }
+      : await createSmarketsSession(credentials.data);
     const factor = session.factor ?? 'complete';
     const needsVerification = session.verify === true || factor !== 'complete';
 
@@ -113,7 +118,9 @@ app.get('/api/events', async (request, response, next) => {
     const localSession = getRequiredSession(request, response);
     if (!localSession) return;
 
-    const data = await fetchFeaturedEvents(localSession.token, request.query.category);
+    const data = mockMode
+      ? fetchMockEvents(parseEventCategory(request.query.category))
+      : await fetchFeaturedEvents(localSession.token, request.query.category);
     response.json(data);
   } catch (error) {
     next(error);
@@ -125,7 +132,13 @@ app.get('/api/events/:eventId', async (request, response, next) => {
     const localSession = getRequiredSession(request, response);
     if (!localSession) return;
 
-    const data = await fetchEventDetail(request.params.eventId, localSession.token);
+    const data = mockMode
+      ? fetchMockEventDetail(request.params.eventId)
+      : await fetchEventDetail(request.params.eventId, localSession.token);
+    if (!data) {
+      response.status(404).json({ message: 'Demo event not found.' });
+      return;
+    }
     response.json(data);
   } catch (error) {
     next(error);
@@ -137,7 +150,7 @@ app.get('/api/quotes', async (request, response, next) => {
     const localSession = getRequiredSession(request, response);
     if (!localSession) return;
 
-    const data = await fetchMarketQuotes(request.query.marketIds, localSession.token);
+    const data = mockMode ? fetchMockQuotes(request.query.marketIds) : await fetchMarketQuotes(request.query.marketIds, localSession.token);
     response.json(data);
   } catch (error) {
     next(error);
@@ -183,5 +196,5 @@ app.use((error: unknown, request: express.Request, response: express.Response, _
 
 const port = Number(process.env.PORT ?? 8798);
 app.listen(port, () => {
-  console.log(`Smarkets proxy listening on http://localhost:${port}`);
+  console.log(`Smarkets ${mockMode ? 'mock ' : ''}proxy listening on http://localhost:${port}`);
 });
