@@ -162,8 +162,19 @@
   position: absolute;
   text-transform: uppercase;
   top: 8px;
-  transform: translateX(-50%);
   white-space: nowrap;
+}
+
+.price-trend-scrub-time-centre {
+  transform: translateX(-50%);
+}
+
+.price-trend-scrub-time-left {
+  transform: translateX(8px);
+}
+
+.price-trend-scrub-time-right {
+  transform: translateX(calc(-100% - 8px));
 }
 
 .price-trend-track-label {

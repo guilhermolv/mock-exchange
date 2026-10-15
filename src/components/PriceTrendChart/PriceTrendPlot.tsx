@@ -82,6 +82,7 @@ export function PriceTrendPlot({
   const markerRx = (markerPx * 100) / viewSize.width;
   const markerRy = (markerPx * plotLayout.plotHeight) / viewSize.height;
   const labelsFitOnRight = trackLabelsFitOnRight(sampledX);
+  const scrubTimePosition = sampledX < 15 ? 'left' : sampledX > 70 ? 'right' : 'centre';
   const pastClipId = `${clipId}-past`;
   const futureClipId = `${clipId}-future`;
 
@@ -182,7 +183,10 @@ export function PriceTrendPlot({
       ) : null}
       {isHovering ? (
         <>
-          <span className="price-trend-scrub-time" style={{ left: `${sampledX}%` }}>
+          <span
+            className={`price-trend-scrub-time price-trend-scrub-time-${scrubTimePosition}`}
+            style={{ left: `${sampledX}%` }}
+          >
             {formatChartScrubLabel(hoverTimestamp)}
           </span>
           {trackLabels.map((label) => (
