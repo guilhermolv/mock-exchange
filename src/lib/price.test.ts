@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toAmericanOdds, toBackStakeGbp, toDecimalOdds, toImpliedPercent, toPotGbp } from './price';
 
-describe('Smarkets OpenAPI price conversions', () => {
+describe('price conversions', () => {
   it('converts documented basis-point examples into decimal, percent and American odds', () => {
     expect(toDecimalOdds(5000)).toBe(2);
     expect(toImpliedPercent(5000)).toBe(50);

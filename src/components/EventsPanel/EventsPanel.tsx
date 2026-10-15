@@ -61,10 +61,10 @@ export function EventsPanel({
       {!selectedEventId ? <CategoryTabs selectedCategory={selectedCategory} onSelectCategory={onSelectCategory} /> : null}
 
       {!isAuthenticated ? (
-        <Notice>Log in to load Smarkets events through the proxy.</Notice>
+        <Notice>Log in to load exchange events.</Notice>
       ) : null}
-      {view.isLoadingEvents && !selectedEventId ? <Notice>Loading events from Smarkets...</Notice> : null}
-      {view.isLoadingDetail ? <Notice>Loading event markets from Smarkets...</Notice> : null}
+      {view.isLoadingEvents && !selectedEventId ? <Notice>Loading exchange events...</Notice> : null}
+      {view.isLoadingDetail ? <Notice>Loading event markets...</Notice> : null}
       {view.eventsError ? <Notice error>Unable to load events. {view.eventsError}</Notice> : null}
       {view.detailError ? <Notice error>Unable to load event details. {view.detailError}</Notice> : null}
       {isAuthenticated && view.quotesError ? <Notice error>Unable to refresh prices. {view.quotesError}</Notice> : null}

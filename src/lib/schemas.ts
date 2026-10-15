@@ -3,14 +3,13 @@ import { z } from 'zod';
 export const healthSchema = z.object({
   status: z.literal('ok'),
   service: z.string(),
-  smarketsBaseUrl: z.string().url(),
 });
 
 export type Health = z.infer<typeof healthSchema>;
 
 export const loginRequestSchema = z.object({
-  username: z.string().email('Enter the email address for your Smarkets account.'),
-  password: z.string().min(1, 'Enter your Smarkets password.'),
+  username: z.string().email('Enter a valid email address.'),
+  password: z.string().min(1, 'Enter a password.'),
 });
 
 export const loginResponseSchema = z.object({

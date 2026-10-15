@@ -12,7 +12,7 @@ export function LoginForm({ formError, isLoggingIn, onSubmit }: LoginFormProps) 
   return (
     <form className="panel login-panel" onSubmit={onSubmit}>
       <div>
-        <p className="section-label">Smarkets account</p>
+        <p className="section-label">Demo account</p>
         <h2>Log in</h2>
       </div>
 

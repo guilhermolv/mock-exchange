@@ -1,7 +1,7 @@
 import type { PriceFormat } from '../types/price';
 
 /**
- * Smarkets quote and order prices are percentage basis points.
+ * Quote and order prices are represented as percentage basis points.
  * Example from the OpenAPI: 5000 = 50% implied probability = 2.00 decimal odds.
  * Decimal odds = 10000 / price.
  */

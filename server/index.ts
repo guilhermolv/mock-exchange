@@ -1,15 +1,9 @@
 import express from 'express';
-import { z } from 'zod';
-import { fetchEventDetail, fetchFeaturedEvents } from './marketData';
-import { fetchMarketQuotes } from './quotes';
-import { createSmarketsSession, isSmarketsSessionError, SmarketsApiError, SmarketsResponseValidationError } from './smarketsClient';
-import { clearLocalSession, createLocalSession, getLocalSession, getSessionIdFromCookieHeader, type StoredSession } from './sessionStore';
 import { loginRequestSchema } from '../src/lib/schemas';
-import { fetchMockEventDetail, fetchMockEvents, fetchMockQuotes } from './mockData';
-import { parseEventCategory } from './marketData';
+import { fetchMockEventDetail, fetchMockEvents, fetchMockQuotes, parseEventCategory } from './mockData';
+import { clearLocalSession, createLocalSession, getLocalSession, getSessionIdFromCookieHeader } from './sessionStore';
 
 const app = express();
-const mockMode = process.env.SMARKETS_LIVE !== 'true';
 app.disable('x-powered-by');
 app.use(express.json({ limit: '16kb' }));
 app.use('/api', (_request, response, next) => {
@@ -18,11 +12,7 @@ app.use('/api', (_request, response, next) => {
 });
 
 app.get('/api/health', (_request, response) => {
-  response.json({
-    status: 'ok',
-    service: mockMode ? 'smarkets-mock-proxy' : 'smarkets-proxy',
-    smarketsBaseUrl: 'https://api.smarkets.com/v3',
-  });
+  response.json({ status: 'ok', service: 'mock-exchange-api' });
 });
 
 app.get('/api/session', (request, response) => {
@@ -33,168 +23,92 @@ app.get('/api/session', (request, response) => {
       status: 'anonymous',
       factor: null,
       expiresAt: null,
-      message: 'No active local Smarkets session.',
+      message: 'No active local demo session.',
     });
     return;
   }
 
   response.json({
-    status: localSession.status === 'authenticated' ? 'authenticated' : 'verification_required',
-    factor: localSession.status === 'authenticated' ? 'complete' : null,
+    status: 'authenticated',
+    factor: 'complete',
     expiresAt: localSession.expiresAt,
-    message:
-      localSession.status === 'authenticated'
-        ? 'Restored the active local Smarkets session.'
-        : 'A local Smarkets session is waiting for verification.',
+    message: 'Restored the active local demo session.',
   });
 });
 
-function getRequiredSession(request: express.Request, response: express.Response): StoredSession | null {
+function hasRequiredSession(request: express.Request, response: express.Response) {
   const sessionId = getSessionIdFromCookieHeader(request.headers.cookie);
   const localSession = getLocalSession(sessionId);
 
   if (!localSession) {
     clearLocalSession(response, sessionId);
-    response.status(401).json({ message: 'Log in to Smarkets before loading market data.', errorType: 'AUTHENTICATION_REQUIRED' });
-    return null;
+    response.status(401).json({ message: 'Log in before loading market data.', errorType: 'AUTHENTICATION_REQUIRED' });
+    return false;
   }
 
-  return localSession;
+  return true;
 }
 
-app.post('/api/session', async (request, response, next) => {
-  try {
-    const credentials = loginRequestSchema.safeParse(request.body);
+app.post('/api/session', (request, response) => {
+  const credentials = loginRequestSchema.safeParse(request.body);
 
-    if (!credentials.success) {
-      response.status(400).json({ message: 'Enter a valid Smarkets email and password.' });
-      return;
-    }
-
-    const session = mockMode
-      ? { token: 'local-demo-session', stop: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), factor: 'complete' as const }
-      : await createSmarketsSession(credentials.data);
-    const factor = session.factor ?? 'complete';
-    const needsVerification = session.verify === true || factor !== 'complete';
-
-    if (!session.token) {
-      response.status(502).json({ message: 'Smarkets did not return a session token.' });
-      return;
-    }
-
-    createLocalSession(
-      response,
-      {
-        token: session.token,
-        expiresAt: session.stop,
-        status: needsVerification ? 'pending_verification' : 'authenticated',
-      },
-      getSessionIdFromCookieHeader(request.headers.cookie),
-    );
-
-    response.status(201).json({
-      status: needsVerification ? 'verification_required' : 'authenticated',
-      factor,
-      expiresAt: session.stop,
-      message: needsVerification
-        ? 'Smarkets accepted the credentials but requires another verification step.'
-        : 'Logged in to Smarkets.',
-    });
-  } catch (error) {
-    next(error);
+  if (!credentials.success) {
+    response.status(400).json({ message: 'Enter a valid email and password.' });
+    return;
   }
+
+  const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+  createLocalSession(
+    response,
+    { token: 'local-demo-session', expiresAt, status: 'authenticated' },
+    getSessionIdFromCookieHeader(request.headers.cookie),
+  );
+
+  response.status(201).json({
+    status: 'authenticated',
+    factor: 'complete',
+    expiresAt,
+    message: 'Logged in to the demo exchange.',
+  });
 });
 
 app.delete('/api/session', (request, response) => {
   clearLocalSession(response, getSessionIdFromCookieHeader(request.headers.cookie));
-  response.json({
-    status: 'anonymous',
-    message: 'Logged out of the local Smarkets session.',
-  });
+  response.json({ status: 'anonymous', message: 'Logged out of the local demo session.' });
 });
 
-app.get('/api/events', async (request, response, next) => {
-  try {
-    const localSession = getRequiredSession(request, response);
-    if (!localSession) return;
-
-    const data = mockMode
-      ? fetchMockEvents(parseEventCategory(request.query.category))
-      : await fetchFeaturedEvents(localSession.token, request.query.category);
-    response.json(data);
-  } catch (error) {
-    next(error);
-  }
+app.get('/api/events', (request, response) => {
+  if (!hasRequiredSession(request, response)) return;
+  response.json(fetchMockEvents(parseEventCategory(request.query.category)));
 });
 
-app.get('/api/events/:eventId', async (request, response, next) => {
-  try {
-    const localSession = getRequiredSession(request, response);
-    if (!localSession) return;
+app.get('/api/events/:eventId', (request, response) => {
+  if (!hasRequiredSession(request, response)) return;
+  const data = fetchMockEventDetail(request.params.eventId);
 
-    const data = mockMode
-      ? fetchMockEventDetail(request.params.eventId)
-      : await fetchEventDetail(request.params.eventId, localSession.token);
-    if (!data) {
-      response.status(404).json({ message: 'Demo event not found.' });
-      return;
-    }
-    response.json(data);
-  } catch (error) {
-    next(error);
+  if (!data) {
+    response.status(404).json({ message: 'Demo event not found.' });
+    return;
   }
+
+  response.json(data);
 });
 
-app.get('/api/quotes', async (request, response, next) => {
-  try {
-    const localSession = getRequiredSession(request, response);
-    if (!localSession) return;
-
-    const data = mockMode ? fetchMockQuotes(request.query.marketIds) : await fetchMarketQuotes(request.query.marketIds, localSession.token);
-    response.json(data);
-  } catch (error) {
-    next(error);
-  }
+app.get('/api/quotes', (request, response) => {
+  if (!hasRequiredSession(request, response)) return;
+  response.json(fetchMockQuotes(request.query.marketIds));
 });
 
 app.use((_request, response) => {
   response.status(404).json({ message: 'Route not found' });
 });
 
-app.use((error: unknown, request: express.Request, response: express.Response, _next: express.NextFunction) => {
-  if (error instanceof z.ZodError) {
-    response.status(400).json({ message: 'Invalid login request.' });
-    return;
-  }
-
-  if (error instanceof SmarketsApiError) {
-    if (isSmarketsSessionError(error)) {
-      clearLocalSession(response, getSessionIdFromCookieHeader(request.headers.cookie));
-    }
-
-    response.status(error.status).json({
-      message: error.message,
-      errorType: error.errorType,
-      retryAfterSeconds: error.retryAfterSeconds,
-    });
-    return;
-  }
-
-  if (error instanceof SmarketsResponseValidationError) {
-    response.status(error.status).json({
-      message: error.message,
-      errorType: error.errorType,
-      path: error.path,
-      issues: error.issues.map((issue) => ({ path: issue.path, message: issue.message })),
-    });
-    return;
-  }
-
+app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
   console.error(error);
-  response.status(500).json({ message: 'Unexpected proxy error' });
+  response.status(500).json({ message: 'Unexpected API error' });
 });
 
 const port = Number(process.env.PORT ?? 8798);
 app.listen(port, () => {
-  console.log(`Smarkets ${mockMode ? 'mock ' : ''}proxy listening on http://localhost:${port}`);
+  console.log(`Mock Exchange API listening on http://localhost:${port}`);
 });

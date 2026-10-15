@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mapContractQuotes } from './quoteMapping';
 
-describe('Smarkets quote mapping', () => {
+describe('exchange quote mapping', () => {
   it('maps exchange offers to back prices and exchange bids to lay prices', () => {
     const quotes = mapContractQuotes(
       {

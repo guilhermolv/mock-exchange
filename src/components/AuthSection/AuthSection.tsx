@@ -15,7 +15,7 @@ export function AuthSection({ formError, isLoggingIn, verificationRequired, onLo
     return (
       <section className="auth-layout">
         <Notice error>
-          Smarkets accepted the credentials but requires another verification step. TOTP is not completed in this task.
+          The credentials were accepted, but another verification step is required. TOTP is not available in this demo.
         </Notice>
       </section>
     );

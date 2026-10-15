@@ -6,7 +6,7 @@ export type StoredSession = {
   status: 'authenticated' | 'pending_verification';
 };
 
-const SESSION_COOKIE_NAME = 'smarkets_task_session';
+const SESSION_COOKIE_NAME = 'mock_exchange_session';
 const sessions = new Map<string, StoredSession>();
 const sessionCookieOptions: CookieOptions = {
   httpOnly: true,

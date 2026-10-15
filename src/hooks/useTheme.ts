@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const THEME_STORAGE_KEY = 'smarkets-task-theme';
+const THEME_STORAGE_KEY = 'mock-exchange-theme';
 
 export type Theme = 'dark' | 'light';
 

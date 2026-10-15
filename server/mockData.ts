@@ -1,6 +1,30 @@
 import type { ContractQuote, EventSummary } from '../src/lib/schemas';
 import { parseMarketIds } from './quoteMapping';
-import type { EventCategory } from './marketData';
+
+export type EventCategory =
+  | 'all'
+  | 'football'
+  | 'horse_racing'
+  | 'greyhound_racing'
+  | 'tennis'
+  | 'basketball'
+  | 'baseball'
+  | 'politics';
+
+const eventCategories: EventCategory[] = [
+  'all',
+  'football',
+  'horse_racing',
+  'greyhound_racing',
+  'tennis',
+  'basketball',
+  'baseball',
+  'politics',
+];
+
+export function parseEventCategory(value: unknown): EventCategory {
+  return typeof value === 'string' && eventCategories.includes(value as EventCategory) ? (value as EventCategory) : 'all';
+}
 
 type MockEvent = EventSummary & { category: EventCategory };
 

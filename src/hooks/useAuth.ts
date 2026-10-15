@@ -30,7 +30,7 @@ export function useAuth({ onNavigateHome }: UseAuthOptions) {
       queryClient.invalidateQueries({ queryKey: ['featured-events'] });
     },
     onError: (error) => {
-      setFormError(error instanceof Error ? error.message : 'Unable to log in to Smarkets right now.');
+      setFormError(error instanceof Error ? error.message : 'Unable to log in right now.');
     },
   });
 
@@ -38,7 +38,7 @@ export function useAuth({ onNavigateHome }: UseAuthOptions) {
     mutationFn: logout,
     onSuccess: () => {
       onNavigateHome();
-      clearExchangeSession(queryClient, 'Logged out of the local Smarkets session.');
+      clearExchangeSession(queryClient, 'Logged out of the local demo session.');
     },
   });
 
@@ -59,7 +59,7 @@ export function useAuth({ onNavigateHome }: UseAuthOptions) {
     const password = String(formData.get('password') ?? '');
 
     if (!username || !password) {
-      setFormError('Enter your Smarkets email and password.');
+      setFormError('Enter your email and password.');
       return;
     }
 
